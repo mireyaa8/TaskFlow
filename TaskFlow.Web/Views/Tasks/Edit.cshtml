@@ -1,0 +1,10 @@
+@model TaskInputModel
+@{
+    ViewData["Title"] = "Edit Task";
+}
+<h1>Edit Task</h1>
+<form method="post">
+    <input type="hidden" asp-for="BoardId" />
+    <partial name="_TaskForm" model="Model" />
+    <button class="btn btn-primary">Save</button>
+</form>

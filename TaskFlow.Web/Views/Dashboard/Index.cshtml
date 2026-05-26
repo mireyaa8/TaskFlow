@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var projects = (IEnumerable<ProjectViewModel>)ViewBag.Projects;
+    var tasks = (IEnumerable<TaskViewModel>)ViewBag.Tasks;
+}
+<h1>Dashboard</h1>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card"><div class="card-body"><h5>Projects</h5><p class="display-6">@projects.Count()</p></div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card"><div class="card-body"><h5>Assigned Tasks</h5><p class="display-6">@tasks.Count()</p></div></div>
+    </div>
+</div>

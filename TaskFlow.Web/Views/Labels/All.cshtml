@@ -1,0 +1,21 @@
+@model IEnumerable<LabelViewModel>
+@{
+    ViewData["Title"] = "Labels";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Labels</h1>
+    <a class="btn btn-primary" asp-action="Create">Create Label</a>
+</div>
+<table class="table">
+@foreach (var label in Model)
+{
+    <tr>
+        <td><span class="badge bg-@label.Color">@label.Name</span></td>
+        <td>
+            <form asp-action="Delete" asp-route-id="@label.Id" method="post">
+                <button class="btn btn-sm btn-danger">Delete</button>
+            </form>
+        </td>
+    </tr>
+}
+</table>

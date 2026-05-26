@@ -1,0 +1,23 @@
+@model ProjectViewModel
+@{
+    ViewData["Title"] = Model.Name;
+    var boards = (IEnumerable<BoardViewModel>)ViewBag.Boards;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>@Model.Name</h1>
+        <p>@Model.Description</p>
+    </div>
+    <a class="btn btn-primary" asp-controller="Boards" asp-action="Create" asp-route-projectId="@Model.Id">Add Board</a>
+</div>
+<div class="row">
+@foreach (var board in boards)
+{
+    <div class="col-md-4 mb-3">
+        <div class="card"><div class="card-body">
+            <h5>@board.Name</h5>
+            <a class="btn btn-outline-primary" asp-controller="Boards" asp-action="Details" asp-route-id="@board.Id">Open Board</a>
+        </div></div>
+    </div>
+}
+</div>
