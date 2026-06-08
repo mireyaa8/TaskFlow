@@ -1,22 +1,37 @@
-@model IEnumerable<ProjectViewModel>
+@model IEnumerable<TaskFlow.Services.Models.ProjectViewModel>
+
 @{
-    ViewData["Title"] = "Projects";
+    ViewData["Title"] = "My Projects";
 }
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>My Projects</h1>
-    <a class="btn btn-primary" asp-action="Create">Create Project</a>
+    <a asp-action="Create" class="btn btn-primary">Create Project</a>
 </div>
-<div class="row">
-@foreach (var project in Model)
+
+@if (!Model.Any())
 {
-    <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5>@project.Name</h5>
-                <p>@project.Description</p>
-                <a class="btn btn-outline-primary" asp-action="Details" asp-route-id="@project.Id">Open</a>
-            </div>
-        </div>
+    <div class="alert alert-info">
+        You do not have any projects yet.
     </div>
 }
-</div>
+else
+{
+    <div class="row">
+        @foreach (var project in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@project.Name</h5>
+                        <p class="card-text">@project.Description</p>
+                        <p class="text-muted">Boards: @project.BoardsCount</p>
+                        <a asp-action="Details" asp-route-id="@project.Id" class="btn btn-outline-primary">
+                            Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

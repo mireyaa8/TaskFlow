@@ -6,6 +6,7 @@ using TaskFlow.Data.Seed;
 using TaskFlow.Services.Implementations;
 using TaskFlow.Services.Interfaces;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -73,4 +74,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-app.Run();
+    app.Run();

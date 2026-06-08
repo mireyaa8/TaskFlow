@@ -18,96 +18,107 @@ public class ProjectService : IProjectService
     public async Task<IEnumerable<ProjectViewModel>> GetMineAsync(string userId)
     {
         return await this.dbContext.Projects
-            .Where(p => !p.IsDeleted && (p.OwnerId == userId || p.Members.Any(m => m.UserId == userId)))
+            .Where(p => p.OwnerId == userId || p.Members.Any(m => m.UserId == userId))
             .Select(p => new ProjectViewModel
             {
                 Id = p.Id,
                 Name = p.Name,
                 Description = p.Description,
-                OwnerName = p.Owner.FirstName + " " + p.Owner.LastName,
-                BoardsCount = p.Boards.Count
+                OwnerName = p.Owner.UserName ?? "Unknown",
+                BoardsCount = p.Boards.Count,
+                CreatedOn = p.CreatedOn
             })
             .ToListAsync();
     }
 
-    public async Task<ProjectViewModel?> GetByIdAsync(int id, string userId, bool isAdmin = false)
+    public async Task<ProjectDetailsViewModel?> GetDetailsAsync(int projectId, string userId, bool isAdmin)
     {
-        if (!isAdmin && !await this.UserHasAccessAsync(id, userId))
-        {
-            return null;
-        }
-
         return await this.dbContext.Projects
-            .Where(p => p.Id == id && !p.IsDeleted)
-            .Select(p => new ProjectViewModel
+            .Where(p =>
+                p.Id == projectId &&
+                (isAdmin || p.OwnerId == userId || p.Members.Any(m => m.UserId == userId)))
+            .Select(p => new ProjectDetailsViewModel
             {
                 Id = p.Id,
                 Name = p.Name,
                 Description = p.Description,
-                OwnerName = p.Owner.FirstName + " " + p.Owner.LastName,
-                BoardsCount = p.Boards.Count
+                OwnerId = p.OwnerId,
+                OwnerName = p.Owner.UserName ?? "Unknown",
+                CreatedOn = p.CreatedOn,
+                Boards = p.Boards.Select(b => new ProjectBoardViewModel
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    TasksCount = b.Tasks.Count
+                })
+                .ToList()
             })
             .FirstOrDefaultAsync();
     }
 
-    public async Task<int> CreateAsync(ProjectInputModel model, string ownerId)
+    public async Task CreateAsync(ProjectInputModel model, string userId)
     {
         var project = new Project
         {
             Name = model.Name,
             Description = model.Description,
-            OwnerId = ownerId
+            OwnerId = userId,
+            CreatedOn = DateTime.UtcNow
         };
 
-        project.Members.Add(new ProjectMember
-        {
-            UserId = ownerId,
-            Role = "Owner"
-        });
-
-        this.dbContext.Projects.Add(project);
+        await this.dbContext.Projects.AddAsync(project);
         await this.dbContext.SaveChangesAsync();
-        return project.Id;
     }
 
-    public async Task EditAsync(int id, ProjectInputModel model, string userId, bool isAdmin = false)
+    public async Task<ProjectInputModel?> GetForEditAsync(int projectId, string userId, bool isAdmin)
     {
-        var project = await this.dbContext.Projects.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        return await this.dbContext.Projects
+            .Where(p => p.Id == projectId && (isAdmin || p.OwnerId == userId))
+            .Select(p => new ProjectInputModel
+            {
+                Name = p.Name,
+                Description = p.Description
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> EditAsync(int projectId, ProjectInputModel model, string userId, bool isAdmin)
+    {
+        var project = await this.dbContext.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId && (isAdmin || p.OwnerId == userId));
+
         if (project == null)
         {
-            throw new InvalidOperationException("Project not found.");
-        }
-
-        if (!isAdmin && project.OwnerId != userId)
-        {
-            throw new UnauthorizedAccessException("Only the owner can edit this project.");
+            return false;
         }
 
         project.Name = model.Name;
         project.Description = model.Description;
+
         await this.dbContext.SaveChangesAsync();
+        return true;
     }
 
-    public async Task DeleteAsync(int id, string userId, bool isAdmin = false)
+    public async Task<bool> DeleteAsync(int projectId, string userId, bool isAdmin)
     {
-        var project = await this.dbContext.Projects.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        var project = await this.dbContext.Projects
+            .FirstOrDefaultAsync(p => p.Id == projectId && (isAdmin || p.OwnerId == userId));
+
         if (project == null)
         {
-            throw new InvalidOperationException("Project not found.");
+            return false;
         }
 
-        if (!isAdmin && project.OwnerId != userId)
-        {
-            throw new UnauthorizedAccessException("Only the owner can delete this project.");
-        }
-
-        project.IsDeleted = true;
+        this.dbContext.Projects.Remove(project);
         await this.dbContext.SaveChangesAsync();
-    }
 
+        return true;
+    }
     public async Task<bool> UserHasAccessAsync(int projectId, string userId)
     {
         return await this.dbContext.Projects
-            .AnyAsync(p => p.Id == projectId && !p.IsDeleted && (p.OwnerId == userId || p.Members.Any(m => m.UserId == userId)));
+            .AnyAsync(p =>
+                p.Id == projectId &&
+                (p.OwnerId == userId || p.Members.Any(m => m.UserId == userId)));
     }
 }

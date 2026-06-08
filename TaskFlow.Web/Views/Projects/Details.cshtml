@@ -1,23 +1,54 @@
-@model ProjectViewModel
+@model TaskFlow.Services.Models.ProjectDetailsViewModel
+
 @{
     ViewData["Title"] = Model.Name;
-    var boards = (IEnumerable<BoardViewModel>)ViewBag.Boards;
 }
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1>@Model.Name</h1>
-        <p>@Model.Description</p>
+        <p class="text-muted">Owner: @Model.OwnerName</p>
     </div>
-    <a class="btn btn-primary" asp-controller="Boards" asp-action="Create" asp-route-projectId="@Model.Id">Add Board</a>
+
+    <div>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
+    </div>
 </div>
-<div class="row">
-@foreach (var board in boards)
+
+<p>@Model.Description</p>
+
+<hr />
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Boards</h3>
+    <a asp-controller="Boards" asp-action="Create" asp-route-projectId="@Model.Id" class="btn btn-primary">
+        Add Board
+    </a>
+</div>
+
+@if (!Model.Boards.Any())
 {
-    <div class="col-md-4 mb-3">
-        <div class="card"><div class="card-body">
-            <h5>@board.Name</h5>
-            <a class="btn btn-outline-primary" asp-controller="Boards" asp-action="Details" asp-route-id="@board.Id">Open Board</a>
-        </div></div>
+    <div class="alert alert-info">
+        No boards have been created for this project yet.
     </div>
 }
-</div>
+else
+{
+    <div class="row">
+        @foreach (var board in Model.Boards)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5>@board.Name</h5>
+                        <p class="text-muted">Tasks: @board.TasksCount</p>
+                        <a asp-controller="Boards" asp-action="Details" asp-route-id="@board.Id" class="btn btn-outline-primary">
+                            Open Board
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
