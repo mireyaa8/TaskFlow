@@ -11,6 +11,11 @@ public static class TestDbFactory
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new ApplicationDbContext(options);
+        var dbContext = new ApplicationDbContext(options);
+
+        dbContext.Database.EnsureDeleted();
+        dbContext.Database.EnsureCreated();
+
+        return dbContext;
     }
 }
