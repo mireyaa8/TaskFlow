@@ -31,6 +31,21 @@ public class ProjectService : IProjectService
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<ProjectViewModel>> GetAllAsync()
+    {
+        return await this.dbContext.Projects
+            .Select(p => new ProjectViewModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                OwnerName = p.Owner.UserName ?? "Unknown",
+                BoardsCount = p.Boards.Count,
+                CreatedOn = p.CreatedOn
+            })
+            .ToListAsync();
+    }
+
     public async Task<ProjectDetailsViewModel?> GetDetailsAsync(int projectId, string userId, bool isAdmin)
     {
         return await this.dbContext.Projects
@@ -96,6 +111,7 @@ public class ProjectService : IProjectService
         project.Description = model.Description;
 
         await this.dbContext.SaveChangesAsync();
+
         return true;
     }
 
@@ -114,8 +130,23 @@ public class ProjectService : IProjectService
 
         return true;
     }
+
     public async Task<bool> UserHasAccessAsync(int projectId, string userId)
     {
+        var isAdmin = await this.dbContext.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Join(
+                this.dbContext.Roles,
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (userRole, role) => role.Name)
+            .AnyAsync(roleName => roleName == "Administrator");
+
+        if (isAdmin)
+        {
+            return true;
+        }
+
         return await this.dbContext.Projects
             .AnyAsync(p =>
                 p.Id == projectId &&

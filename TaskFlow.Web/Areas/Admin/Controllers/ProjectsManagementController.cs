@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskFlow.Services.Interfaces;
-using TaskFlow.Web.Extensions;
 
 namespace TaskFlow.Web.Areas.Admin.Controllers;
 
@@ -18,7 +17,8 @@ public class ProjectsManagementController : Controller
 
     public async Task<IActionResult> All()
     {
-        // Starter version shows current admin-accessible projects. Add a true GetAllAdminAsync later.
-        return View(await this.projectService.GetMineAsync(User.GetId()));
+        var projects = await this.projectService.GetAllAsync();
+
+        return View(projects);
     }
 }

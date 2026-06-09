@@ -6,6 +6,8 @@ public interface IProjectService
 {
     Task<IEnumerable<ProjectViewModel>> GetMineAsync(string userId);
 
+    Task<IEnumerable<ProjectViewModel>> GetAllAsync();
+
     Task<ProjectDetailsViewModel?> GetDetailsAsync(int projectId, string userId, bool isAdmin);
 
     Task CreateAsync(ProjectInputModel model, string userId);

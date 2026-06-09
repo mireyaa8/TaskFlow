@@ -1,12 +1,52 @@
-@model IEnumerable<ProjectViewModel>
+@model IEnumerable<TaskFlow.Services.Models.ProjectViewModel>
+
 @{
-    ViewData["Title"] = "Admin Projects";
+    ViewData["Title"] = "Admin - All Projects";
 }
-<h1>Admin - Projects</h1>
-<p>This starter admin page is protected by the Administrator role. Extend it with all-project management.</p>
-<table class="table">
-@foreach (var project in Model)
+
+<h1>Admin - All Projects</h1>
+
+<p class="text-muted">
+    This page is visible only to users in the Administrator role.
+</p>
+
+@if (!Model.Any())
 {
-    <tr><td>@project.Name</td><td>@project.OwnerName</td><td>@project.BoardsCount boards</td></tr>
+    <div class="alert alert-info">
+        There are no projects yet.
+    </div>
 }
-</table>
+else
+{
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Owner</th>
+                <th>Boards</th>
+                <th>Created On</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var project in Model)
+            {
+                <tr>
+                    <td>@project.Name</td>
+                    <td>@project.OwnerName</td>
+                    <td>@project.BoardsCount</td>
+                    <td>@project.CreatedOn.ToLocalTime().ToString("g")</td>
+                    <td>
+                        <a asp-area=""
+                           asp-controller="Projects"
+                           asp-action="Details"
+                           asp-route-id="@project.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            Details
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

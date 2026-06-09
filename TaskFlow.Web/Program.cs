@@ -6,7 +6,6 @@ using TaskFlow.Data.Seed;
 using TaskFlow.Services.Implementations;
 using TaskFlow.Services.Interfaces;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -72,6 +71,14 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    await ApplicationSeeder.SeedAsync(dbContext, userManager, roleManager);
+}
 app.MapRazorPages();
 
     app.Run();
