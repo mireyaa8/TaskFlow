@@ -8,19 +8,17 @@ namespace TaskFlow.Web.Controllers;
 [Authorize]
 public class DashboardController : Controller
 {
-    private readonly IProjectService projectService;
-    private readonly ITaskService taskService;
+    private readonly IDashboardService dashboardService;
 
-    public DashboardController(IProjectService projectService, ITaskService taskService)
+    public DashboardController(IDashboardService dashboardService)
     {
-        this.projectService = projectService;
-        this.taskService = taskService;
+        this.dashboardService = dashboardService;
     }
 
     public async Task<IActionResult> Index()
     {
-        ViewBag.Projects = await this.projectService.GetMineAsync(User.GetId());
-        ViewBag.Tasks = await this.taskService.GetMineAsync(User.GetId());
-        return View();
+        var model = await this.dashboardService.GetDashboardAsync(User.GetId());
+
+        return View(model);
     }
 }
