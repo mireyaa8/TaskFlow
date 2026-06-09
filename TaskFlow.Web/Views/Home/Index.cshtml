@@ -1,10 +1,96 @@
 @{
     ViewData["Title"] = "Home";
 }
-<div class="p-5 mb-4 bg-light rounded-3">
+
+<div class="p-5 mb-4 bg-light rounded-3 border">
     <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">TaskFlow</h1>
-        <p class="col-md-8 fs-4">Organize projects, boards, tasks, labels, comments, and team work in one ASP.NET Core MVC app.</p>
-        <a class="btn btn-primary btn-lg" asp-controller="Projects" asp-action="All">Open Projects</a>
+        <h1 class="display-5 fw-bold">Organize your work with TaskFlow</h1>
+
+        <p class="col-md-8 fs-5">
+            TaskFlow helps teams and individual users manage projects, boards, tasks,
+            labels, comments, and progress in one simple web application.
+        </p>
+
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary btn-lg">
+                Go to Dashboard
+            </a>
+        }
+        else
+        {
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg me-2">
+                Get Started
+            </a>
+
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-secondary btn-lg">
+                Login
+            </a>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-primary">
+            <div class="card-body">
+                <h5 class="card-title">Projects and Boards</h5>
+                <p class="card-text">
+                    Create projects and split the work into boards for better organization.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 border-success">
+            <div class="card-body">
+                <h5 class="card-title">Tasks and Status Tracking</h5>
+                <p class="card-text">
+                    Create tasks, assign priorities, set due dates, and update status using AJAX.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100 border-warning">
+            <div class="card-body">
+                <h5 class="card-title">Comments and Labels</h5>
+                <p class="card-text">
+                    Discuss tasks with comments and organize work using colorful labels.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">For Users</h5>
+                <ul class="mb-0">
+                    <li>Create and manage your own projects</li>
+                    <li>Track assigned tasks</li>
+                    <li>Add comments and labels to tasks</li>
+                    <li>Update task progress quickly</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">For Administrators</h5>
+                <ul class="mb-0">
+                    <li>Access the Admin area</li>
+                    <li>View all projects</li>
+                    <li>Manage labels</li>
+                    <li>Use role-based protected functionality</li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>

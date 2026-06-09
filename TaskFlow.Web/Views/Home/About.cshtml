@@ -1,5 +1,77 @@
 @{
     ViewData["Title"] = "About";
 }
+
 <h1>About TaskFlow</h1>
-<p>TaskFlow is a project tracker built with ASP.NET Core MVC, Entity Framework Core, Identity, services, AJAX, and NUnit tests.</p>
+
+<p class="lead">
+    TaskFlow is a project tracking system built with ASP.NET Core MVC.
+    It is designed to help users organize work into projects, boards, and tasks.
+</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>Purpose</h4>
+        <p>
+            The purpose of the application is to demonstrate a complete MVC web application
+            with authentication, role-based authorization, Entity Framework Core data access,
+            service-layer business logic, Razor views, Bootstrap design, AJAX, and unit tests.
+        </p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Main Features
+            </div>
+
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>User registration and login</li>
+                    <li>Custom user entity</li>
+                    <li>Administrator role</li>
+                    <li>Project, board, and task management</li>
+                    <li>Task comments</li>
+                    <li>Task labels</li>
+                    <li>AJAX task status update</li>
+                    <li>Custom error pages</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                Technologies
+            </div>
+
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>ASP.NET Core MVC</li>
+                    <li>ASP.NET Core Identity</li>
+                    <li>Entity Framework Core</li>
+                    <li>Microsoft SQL Server</li>
+                    <li>Razor Views</li>
+                    <li>Bootstrap 5</li>
+                    <li>JavaScript Fetch API</li>
+                    <li>NUnit tests</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h4>Architecture</h4>
+        <p>
+            The solution is split into multiple projects. The web project contains controllers
+            and views, the data projects contain the database context and entity models,
+            the services project contains business logic, and the test project contains
+            automated service tests.
+        </p>
+    </div>
+</div>
