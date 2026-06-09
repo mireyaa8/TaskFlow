@@ -4,14 +4,77 @@
     ViewData["Title"] = Model.Title;
 }
 
-<h1>@Model.Title</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>@Model.Title</h1>
 
-<p>@Model.Description</p>
+    <a asp-controller="Boards"
+       asp-action="Details"
+       asp-route-id="@Model.BoardId"
+       class="btn btn-secondary">
+        Back to Board
+    </a>
+</div>
 
-<p>
-    <strong>Status:</strong>
-    <span id="task-status">@Model.Status</span>
-</p>
+<div class="card mb-3">
+    <div class="card-body">
+        <p>@Model.Description</p>
+
+        <p>
+            <strong>Status:</strong>
+            <span id="task-status" class="badge bg-info">@Model.Status</span>
+        </p>
+
+        <p>
+            <strong>Priority:</strong> @Model.Priority
+        </p>
+
+        @if (Model.DueDate.HasValue)
+        {
+            <p>
+                <strong>Due Date:</strong> @Model.DueDate.Value.ToString("dd MMM yyyy")
+            </p>
+        }
+
+        <p>
+            <strong>Assignee:</strong> @(string.IsNullOrWhiteSpace(Model.AssigneeName) ? "Unassigned" : Model.AssigneeName)
+        </p>
+
+        <div class="mb-3">
+            <strong>Labels:</strong>
+
+            @if (Model.Labels == null || !Model.Labels.Any())
+            {
+                <span class="text-muted">No labels assigned.</span>
+            }
+            else
+            {
+                foreach (var label in Model.Labels)
+                {
+                    <span class="badge bg-@label.Color me-1">@label.Name</span>
+                }
+            }
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Tasks"
+               asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+                Edit
+            </a>
+
+            <form asp-controller="Tasks"
+                  asp-action="Delete"
+                  asp-route-id="@Model.Id"
+                  method="post"
+                  onsubmit="return confirm('Are you sure you want to delete this task?');">
+                @Html.AntiForgeryToken()
+
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -60,25 +123,58 @@
     </div>
 </div>
 
-<p>
-    <strong>Priority:</strong> @Model.Priority
-</p>
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Manage Labels</h5>
 
-@if (Model.DueDate.HasValue)
-{
-    <p>
-        <strong>Due Date:</strong> @Model.DueDate.Value.ToString("dd MMM yyyy")
-    </p>
-}
+        @if (Model.AvailableLabels == null || !Model.AvailableLabels.Any())
+        {
+            <div class="alert alert-info mb-3">
+                No more labels are available to add.
+            </div>
+        }
+        else
+        {
+            <form asp-controller="Tasks" asp-action="AddLabel" method="post" class="row g-2 mb-3">
+                @Html.AntiForgeryToken()
 
-<p>
-    <strong>Assignee:</strong> @(string.IsNullOrWhiteSpace(Model.AssigneeName) ? "Unassigned" : Model.AssigneeName)
-</p>
+                <input type="hidden" name="taskId" value="@Model.Id" />
 
-<div class="mb-3">
-    <a asp-controller="Tasks" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
-    <a asp-controller="Tasks" asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
-    <a asp-controller="Boards" asp-action="Details" asp-route-id="@Model.BoardId" class="btn btn-secondary">Back to Board</a>
+                <div class="col-md-6">
+                    <select name="labelId" class="form-select">
+                        @foreach (var label in Model.AvailableLabels)
+                        {
+                            <option value="@label.Id">@label.Name (@label.Color)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success">Add Label</button>
+                </div>
+            </form>
+        }
+
+        @if (Model.Labels != null && Model.Labels.Any())
+        {
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var label in Model.Labels)
+                {
+                    <form asp-controller="Tasks" asp-action="RemoveLabel" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="taskId" value="@Model.Id" />
+                        <input type="hidden" name="labelId" value="@label.Id" />
+
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <span class="badge bg-@label.Color">@label.Name</span>
+                            Remove
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
 </div>
 
 <hr />

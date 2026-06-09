@@ -22,22 +22,19 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskViewModel>> GetByBoardAsync(int boardId, string userId)
     {
-        var board = await this.dbContext.Boards
-            .FirstOrDefaultAsync(b => b.Id == boardId);
+        var board = await this.dbContext.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
 
         if (board == null || !await this.projectService.UserHasAccessAsync(board.ProjectId, userId))
         {
             return Enumerable.Empty<TaskViewModel>();
         }
 
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.BoardId == boardId))
-            .ToListAsync();
+        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.BoardId == boardId)).ToListAsync();
     }
 
     public async Task<IEnumerable<TaskViewModel>> GetMineAsync(string userId)
     {
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.AssigneeId == userId))
-            .ToListAsync();
+        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.AssigneeId == userId)).ToListAsync();
     }
 
     public async Task<TaskViewModel?> GetByIdAsync(int id, string userId, bool isAdmin = false)
@@ -56,7 +53,7 @@ public class TaskService : ITaskService
             return null;
         }
 
-        return await this.dbContext.TaskItems
+        var model = await this.dbContext.TaskItems
             .Where(t => t.Id == id)
             .Select(t => new TaskViewModel
             {
@@ -83,12 +80,42 @@ public class TaskService : ITaskService
                     })
                     .ToList(),
 
+                Labels = t.TaskLabels
+                    .OrderBy(tl => tl.Label.Name)
+                    .Select(tl => new LabelViewModel
+                    {
+                        Id = tl.Label.Id,
+                        Name = tl.Label.Name,
+                        Color = tl.Label.Color
+                    })
+                    .ToList(),
+
                 NewComment = new CommentInputModel
                 {
                     TaskItemId = t.Id
                 }
             })
             .FirstOrDefaultAsync();
+
+        if (model == null)
+        {
+            return null;
+        }
+
+        var usedLabelIds = model.Labels.Select(l => l.Id).ToList();
+
+        model.AvailableLabels = await this.dbContext.Labels
+            .Where(l => !usedLabelIds.Contains(l.Id))
+            .OrderBy(l => l.Name)
+            .Select(l => new LabelViewModel
+            {
+                Id = l.Id,
+                Name = l.Name,
+                Color = l.Color
+            })
+            .ToListAsync();
+
+        return model;
     }
 
     public async Task<int> CreateAsync(TaskInputModel model, string userId)
@@ -183,6 +210,76 @@ public class TaskService : ITaskService
         }
 
         task.Status = status;
+
+        await this.dbContext.SaveChangesAsync();
+    }
+
+    public async Task AddLabelAsync(int taskId, int labelId, string userId, bool isAdmin = false)
+    {
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == taskId);
+
+        if (task == null)
+        {
+            throw new InvalidOperationException("Task not found.");
+        }
+
+        if (!isAdmin && !await this.projectService.UserHasAccessAsync(task.Board.ProjectId, userId))
+        {
+            throw new UnauthorizedAccessException("You do not have access to this task.");
+        }
+
+        var labelExists = await this.dbContext.Labels.AnyAsync(l => l.Id == labelId);
+
+        if (!labelExists)
+        {
+            throw new InvalidOperationException("Label not found.");
+        }
+
+        var alreadyAdded = await this.dbContext.TaskLabels
+            .AnyAsync(tl => tl.TaskItemId == taskId && tl.LabelId == labelId);
+
+        if (alreadyAdded)
+        {
+            return;
+        }
+
+        this.dbContext.TaskLabels.Add(new TaskLabel
+        {
+            TaskItemId = taskId,
+            LabelId = labelId
+        });
+
+        await this.dbContext.SaveChangesAsync();
+    }
+
+    public async Task RemoveLabelAsync(int taskId, int labelId, string userId, bool isAdmin = false)
+    {
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == taskId);
+
+        if (task == null)
+        {
+            throw new InvalidOperationException("Task not found.");
+        }
+
+        if (!isAdmin && !await this.projectService.UserHasAccessAsync(task.Board.ProjectId, userId))
+        {
+            throw new UnauthorizedAccessException("You do not have access to this task.");
+        }
+
+        var taskLabel = await this.dbContext.TaskLabels
+            .FirstOrDefaultAsync(tl => tl.TaskItemId == taskId && tl.LabelId == labelId);
+
+        if (taskLabel == null)
+        {
+            return;
+        }
+
+        this.dbContext.TaskLabels.Remove(taskLabel);
+
         await this.dbContext.SaveChangesAsync();
     }
 
@@ -229,6 +326,16 @@ public class TaskService : ITaskService
                 })
                 .ToList(),
 
+            Labels = t.TaskLabels
+                .OrderBy(tl => tl.Label.Name)
+                .Select(tl => new LabelViewModel
+                {
+                    Id = tl.Label.Id,
+                    Name = tl.Label.Name,
+                    Color = tl.Label.Color
+                })
+                .ToList(),
+
             NewComment = new CommentInputModel
             {
                 TaskItemId = t.Id
@@ -238,8 +345,7 @@ public class TaskService : ITaskService
 
     private async Task ValidateBoardAccessAsync(int boardId, string userId)
     {
-        var board = await this.dbContext.Boards
-            .FirstOrDefaultAsync(b => b.Id == boardId);
+        var board = await this.dbContext.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
 
         if (board == null)
         {

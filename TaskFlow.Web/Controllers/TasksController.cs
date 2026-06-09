@@ -19,13 +19,21 @@ public class TasksController : Controller
     public async Task<IActionResult> MyTasks()
     {
         var tasks = await this.taskService.GetMineAsync(User.GetId());
+
         return View(tasks);
     }
 
     public async Task<IActionResult> Details(int id)
     {
-        var task = await this.taskService.GetByIdAsync(id, User.GetId());
-        if (task == null) return NotFound();
+        var task = await this.taskService.GetByIdAsync(
+            id,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        if (task == null)
+        {
+            return NotFound();
+        }
 
         return View(task);
     }
@@ -39,17 +47,29 @@ public class TasksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TaskInputModel model)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
 
         var id = await this.taskService.CreateAsync(model, User.GetId());
+
         TempData["SuccessMessage"] = "Task created successfully.";
+
         return RedirectToAction(nameof(Details), new { id });
     }
 
     public async Task<IActionResult> Edit(int id)
     {
-        var task = await this.taskService.GetByIdAsync(id, User.GetId());
-        if (task == null) return NotFound();
+        var task = await this.taskService.GetByIdAsync(
+            id,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        if (task == null)
+        {
+            return NotFound();
+        }
 
         return View(new TaskInputModel
         {
@@ -66,10 +86,19 @@ public class TasksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, TaskInputModel model)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
 
-        await this.taskService.EditAsync(id, model, User.GetId());
+        await this.taskService.EditAsync(
+            id,
+            model,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
         TempData["SuccessMessage"] = "Task updated successfully.";
+
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -77,8 +106,55 @@ public class TasksController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        await this.taskService.DeleteAsync(id, User.GetId());
+        var task = await this.taskService.GetByIdAsync(
+            id,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        if (task == null)
+        {
+            return NotFound();
+        }
+
+        var boardId = task.BoardId;
+
+        await this.taskService.DeleteAsync(
+            id,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
         TempData["SuccessMessage"] = "Task deleted successfully.";
-        return RedirectToAction(nameof(MyTasks));
+
+        return RedirectToAction("Details", "Boards", new { id = boardId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddLabel(int taskId, int labelId)
+    {
+        await this.taskService.AddLabelAsync(
+            taskId,
+            labelId,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        TempData["SuccessMessage"] = "Label added to task.";
+
+        return RedirectToAction(nameof(Details), new { id = taskId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveLabel(int taskId, int labelId)
+    {
+        await this.taskService.RemoveLabelAsync(
+            taskId,
+            labelId,
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        TempData["SuccessMessage"] = "Label removed from task.";
+
+        return RedirectToAction(nameof(Details), new { id = taskId });
     }
 }

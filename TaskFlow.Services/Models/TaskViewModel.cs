@@ -18,8 +18,11 @@ public class TaskViewModel
 
     public string? AssigneeName { get; set; }
 
-    public IEnumerable<CommentViewModel> Comments { get; set; }
-        = new HashSet<CommentViewModel>();
+    public IEnumerable<CommentViewModel> Comments { get; set; } = new HashSet<CommentViewModel>();
 
     public CommentInputModel NewComment { get; set; } = new CommentInputModel();
+
+    public IEnumerable<LabelViewModel> Labels { get; set; } = new HashSet<LabelViewModel>();
+
+    public IEnumerable<LabelViewModel> AvailableLabels { get; set; } = new HashSet<LabelViewModel>();
 }
