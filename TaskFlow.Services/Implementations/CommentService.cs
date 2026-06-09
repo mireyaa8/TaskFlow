@@ -11,49 +11,73 @@ public class CommentService : ICommentService
     private readonly ApplicationDbContext dbContext;
     private readonly IProjectService projectService;
 
-    public CommentService(ApplicationDbContext dbContext, IProjectService projectService)
+    public CommentService(
+        ApplicationDbContext dbContext,
+        IProjectService projectService)
     {
         this.dbContext = dbContext;
         this.projectService = projectService;
     }
 
-    public async Task AddAsync(CommentInputModel model, string authorId)
+    public async Task<bool> CreateAsync(CommentInputModel model, string userId)
     {
-        var task = await this.dbContext.TaskItems.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == model.TaskItemId);
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == model.TaskItemId);
+
         if (task == null)
         {
-            throw new InvalidOperationException("Task not found.");
+            return false;
         }
 
-        if (!await this.projectService.UserHasAccessAsync(task.Board.ProjectId, authorId))
+        var hasAccess = await this.projectService.UserHasAccessAsync(task.Board.ProjectId, userId);
+
+        if (!hasAccess)
         {
-            throw new UnauthorizedAccessException("You do not have access to this task.");
+            return false;
         }
 
-        this.dbContext.Comments.Add(new Comment
+        var comment = new Comment
         {
-            TaskItemId = model.TaskItemId,
             Content = model.Content,
-            AuthorId = authorId
-        });
+            TaskItemId = model.TaskItemId,
+            AuthorId = userId,
+            CreatedOn = DateTime.UtcNow
+        };
 
+        await this.dbContext.Comments.AddAsync(comment);
         await this.dbContext.SaveChangesAsync();
+
+        return true;
     }
 
-    public async Task DeleteAsync(int id, string userId, bool isAdmin = false)
+    public async Task<bool> DeleteAsync(int commentId, string userId, bool isAdmin)
     {
-        var comment = await this.dbContext.Comments.FirstOrDefaultAsync(c => c.Id == id);
+        var comment = await this.dbContext.Comments
+            .Include(c => c.TaskItem)
+            .ThenInclude(t => t.Board)
+            .FirstOrDefaultAsync(c => c.Id == commentId);
+
         if (comment == null)
         {
-            throw new InvalidOperationException("Comment not found.");
+            return false;
+        }
+
+        var hasAccess = await this.projectService.UserHasAccessAsync(comment.TaskItem.Board.ProjectId, userId);
+
+        if (!hasAccess)
+        {
+            return false;
         }
 
         if (!isAdmin && comment.AuthorId != userId)
         {
-            throw new UnauthorizedAccessException("Only the author can delete this comment.");
+            return false;
         }
 
         this.dbContext.Comments.Remove(comment);
         await this.dbContext.SaveChangesAsync();
+
+        return true;
     }
 }

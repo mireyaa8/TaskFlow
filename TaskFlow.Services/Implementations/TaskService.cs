@@ -22,18 +22,22 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskViewModel>> GetByBoardAsync(int boardId, string userId)
     {
-        var board = await this.dbContext.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        var board = await this.dbContext.Boards
+            .FirstOrDefaultAsync(b => b.Id == boardId);
+
         if (board == null || !await this.projectService.UserHasAccessAsync(board.ProjectId, userId))
         {
             return Enumerable.Empty<TaskViewModel>();
         }
 
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.BoardId == boardId)).ToListAsync();
+        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.BoardId == boardId))
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<TaskViewModel>> GetMineAsync(string userId)
     {
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.AssigneeId == userId)).ToListAsync();
+        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.AssigneeId == userId))
+            .ToListAsync();
     }
 
     public async Task<TaskViewModel?> GetByIdAsync(int id, string userId, bool isAdmin = false)
@@ -52,7 +56,39 @@ public class TaskService : ITaskService
             return null;
         }
 
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.Id == id)).FirstAsync();
+        return await this.dbContext.TaskItems
+            .Where(t => t.Id == id)
+            .Select(t => new TaskViewModel
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Description = t.Description,
+                Status = t.Status,
+                Priority = t.Priority,
+                DueDate = t.DueDate,
+                BoardId = t.BoardId,
+                AssigneeName = t.Assignee == null
+                    ? null
+                    : ((t.Assignee.FirstName ?? string.Empty) + " " + (t.Assignee.LastName ?? string.Empty)).Trim(),
+
+                Comments = t.Comments
+                    .OrderByDescending(c => c.CreatedOn)
+                    .Select(c => new CommentViewModel
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        AuthorId = c.AuthorId,
+                        AuthorName = c.Author.UserName ?? "Unknown",
+                        CreatedOn = c.CreatedOn
+                    })
+                    .ToList(),
+
+                NewComment = new CommentInputModel
+                {
+                    TaskItemId = t.Id
+                }
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<int> CreateAsync(TaskInputModel model, string userId)
@@ -73,12 +109,16 @@ public class TaskService : ITaskService
 
         this.dbContext.TaskItems.Add(task);
         await this.dbContext.SaveChangesAsync();
+
         return task.Id;
     }
 
     public async Task EditAsync(int id, TaskInputModel model, string userId, bool isAdmin = false)
     {
-        var task = await this.dbContext.TaskItems.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == id);
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (task == null)
         {
             throw new InvalidOperationException("Task not found.");
@@ -90,18 +130,23 @@ public class TaskService : ITaskService
         }
 
         this.ValidateTaskFields(model.Status, model.Priority);
+
         task.Title = model.Title;
         task.Description = model.Description;
         task.Status = model.Status;
         task.Priority = model.Priority;
         task.DueDate = model.DueDate;
         task.AssigneeId = model.AssigneeId;
+
         await this.dbContext.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(int id, string userId, bool isAdmin = false)
     {
-        var task = await this.dbContext.TaskItems.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == id);
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (task == null)
         {
             throw new InvalidOperationException("Task not found.");
@@ -123,7 +168,10 @@ public class TaskService : ITaskService
             throw new InvalidOperationException("Invalid status.");
         }
 
-        var task = await this.dbContext.TaskItems.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == id);
+        var task = await this.dbContext.TaskItems
+            .Include(t => t.Board)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (task == null)
         {
             throw new InvalidOperationException("Task not found.");
@@ -143,7 +191,8 @@ public class TaskService : ITaskService
         keyword = keyword?.Trim() ?? string.Empty;
 
         var query = this.dbContext.TaskItems
-            .Where(t => t.Board.Project.OwnerId == userId || t.Board.Project.Members.Any(m => m.UserId == userId));
+            .Where(t => t.Board.Project.OwnerId == userId ||
+                        t.Board.Project.Members.Any(m => m.UserId == userId));
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -164,13 +213,34 @@ public class TaskService : ITaskService
             Priority = t.Priority,
             DueDate = t.DueDate,
             BoardId = t.BoardId,
-            AssigneeName = t.Assignee == null ? null : t.Assignee.FirstName + " " + t.Assignee.LastName
+            AssigneeName = t.Assignee == null
+                ? null
+                : ((t.Assignee.FirstName ?? string.Empty) + " " + (t.Assignee.LastName ?? string.Empty)).Trim(),
+
+            Comments = t.Comments
+                .OrderByDescending(c => c.CreatedOn)
+                .Select(c => new CommentViewModel
+                {
+                    Id = c.Id,
+                    Content = c.Content,
+                    AuthorId = c.AuthorId,
+                    AuthorName = c.Author.UserName ?? "Unknown",
+                    CreatedOn = c.CreatedOn
+                })
+                .ToList(),
+
+            NewComment = new CommentInputModel
+            {
+                TaskItemId = t.Id
+            }
         });
     }
 
     private async Task ValidateBoardAccessAsync(int boardId, string userId)
     {
-        var board = await this.dbContext.Boards.FirstOrDefaultAsync(b => b.Id == boardId);
+        var board = await this.dbContext.Boards
+            .FirstOrDefaultAsync(b => b.Id == boardId);
+
         if (board == null)
         {
             throw new InvalidOperationException("Board not found.");

@@ -4,6 +4,7 @@ namespace TaskFlow.Services.Interfaces;
 
 public interface ICommentService
 {
-    Task AddAsync(CommentInputModel model, string authorId);
-    Task DeleteAsync(int id, string userId, bool isAdmin = false);
+    Task<bool> CreateAsync(CommentInputModel model, string userId);
+
+    Task<bool> DeleteAsync(int commentId, string userId, bool isAdmin);
 }

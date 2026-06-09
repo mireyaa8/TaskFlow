@@ -1,13 +1,94 @@
-@model TaskViewModel
+@model TaskFlow.Services.Models.TaskViewModel
+
 @{
     ViewData["Title"] = Model.Title;
 }
+
 <h1>@Model.Title</h1>
+
 <p>@Model.Description</p>
-<p><strong>Status:</strong> @Model.Status</p>
-<p><strong>Priority:</strong> @Model.Priority</p>
-<p><strong>Assignee:</strong> @(Model.AssigneeName ?? "Unassigned")</p>
-<a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
-<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-    <button class="btn btn-danger">Delete</button>
+
+<p>
+    <strong>Status:</strong>
+    <span id="task-status">@Model.Status</span>
+</p>
+
+<p>
+    <strong>Priority:</strong> @Model.Priority
+</p>
+
+@if (Model.DueDate.HasValue)
+{
+    <p>
+        <strong>Due Date:</strong> @Model.DueDate.Value.ToString("dd MMM yyyy")
+    </p>
+}
+
+<p>
+    <strong>Assignee:</strong> @(string.IsNullOrWhiteSpace(Model.AssigneeName) ? "Unassigned" : Model.AssigneeName)
+</p>
+
+<div class="mb-3">
+    <a asp-controller="Tasks" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-controller="Tasks" asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
+    <a asp-controller="Boards" asp-action="Details" asp-route-id="@Model.BoardId" class="btn btn-secondary">Back to Board</a>
+</div>
+
+<hr />
+
+<h3>Comments</h3>
+
+<form asp-controller="Comments" asp-action="Create" method="post" class="mb-4">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="TaskItemId" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label class="form-label">Add comment</label>
+        <textarea name="Content" class="form-control" rows="3"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Comment</button>
 </form>
+
+@if (Model.Comments == null || !Model.Comments.Any())
+{
+    <div class="alert alert-info">
+        No comments yet.
+    </div>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var comment in Model.Comments)
+        {
+            <div class="list-group-item mb-2">
+                <div class="d-flex justify-content-between">
+                    <strong>@comment.AuthorName</strong>
+                    <small class="text-muted">@comment.CreatedOn.ToLocalTime().ToString("g")</small>
+                </div>
+
+                <p class="mb-2">@comment.Content</p>
+
+                @if (User.IsInRole("Administrator") ||
+                    User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == comment.AuthorId)
+                {
+                    <form asp-controller="Comments" asp-action="Delete" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="id" value="@comment.Id" />
+                        <input type="hidden" name="taskId" value="@Model.Id" />
+
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            Delete
+                        </button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
