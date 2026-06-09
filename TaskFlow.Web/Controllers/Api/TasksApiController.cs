@@ -1,8 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TaskFlow.Services.Interfaces;
-using TaskFlow.Web.Extensions;
 
 namespace TaskFlow.Web.Controllers.Api;
 
@@ -18,25 +17,45 @@ public class TasksApiController : ControllerBase
         this.taskService = taskService;
     }
 
-    [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] string keyword = "")
+    [HttpPost("{id}/status")]
+    public async Task<IActionResult> ChangeStatus(int id, [FromBody] ChangeTaskStatusRequest request)
     {
-        var tasks = await this.taskService.SearchAsync(keyword, User.GetId());
-        return Ok(tasks);
-    }
+        if (request == null || string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequest(new { message = "Status is required." });
+        }
 
-    [HttpPost("{id:int}/status")]
-    public async Task<IActionResult> ChangeStatus(int id, ChangeTaskStatusInputModel model)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var userId = this.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        await this.taskService.ChangeStatusAsync(id, model.Status, User.GetId(), User.IsInRole("Administrator"));
-        return Ok(new { message = "Task status updated successfully." });
+        if (userId == null)
+        {
+            return Unauthorized(new { message = "User is not authenticated." });
+        }
+
+        var isAdmin = this.User.IsInRole("Administrator");
+
+        try
+        {
+            await this.taskService.ChangeStatusAsync(id, request.Status, userId, isAdmin);
+
+            return Ok(new
+            {
+                message = "Task status updated successfully.",
+                status = request.Status
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 }
 
-public class ChangeTaskStatusInputModel
+public class ChangeTaskStatusRequest
 {
-    [Required]
     public string Status { get; set; } = null!;
 }
