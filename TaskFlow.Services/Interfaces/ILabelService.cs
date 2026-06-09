@@ -5,6 +5,12 @@ namespace TaskFlow.Services.Interfaces;
 public interface ILabelService
 {
     Task<IEnumerable<LabelViewModel>> GetAllAsync();
+
+    Task<LabelInputModel?> GetForEditAsync(int id);
+
     Task<int> CreateAsync(LabelInputModel model);
-    Task DeleteAsync(int id);
+
+    Task<bool> EditAsync(int id, LabelInputModel model);
+
+    Task<bool> DeleteAsync(int id);
 }

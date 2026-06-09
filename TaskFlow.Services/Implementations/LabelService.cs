@@ -18,27 +18,71 @@ public class LabelService : ILabelService
     public async Task<IEnumerable<LabelViewModel>> GetAllAsync()
     {
         return await this.dbContext.Labels
-            .Select(l => new LabelViewModel { Id = l.Id, Name = l.Name, Color = l.Color })
+            .OrderBy(l => l.Name)
+            .Select(l => new LabelViewModel
+            {
+                Id = l.Id,
+                Name = l.Name,
+                Color = l.Color
+            })
             .ToListAsync();
+    }
+
+    public async Task<LabelInputModel?> GetForEditAsync(int id)
+    {
+        return await this.dbContext.Labels
+            .Where(l => l.Id == id)
+            .Select(l => new LabelInputModel
+            {
+                Name = l.Name,
+                Color = l.Color
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<int> CreateAsync(LabelInputModel model)
     {
-        var label = new Label { Name = model.Name, Color = model.Color };
+        var label = new Label
+        {
+            Name = model.Name,
+            Color = model.Color
+        };
+
         this.dbContext.Labels.Add(label);
         await this.dbContext.SaveChangesAsync();
+
         return label.Id;
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task<bool> EditAsync(int id, LabelInputModel model)
     {
         var label = await this.dbContext.Labels.FindAsync(id);
+
         if (label == null)
         {
-            throw new InvalidOperationException("Label not found.");
+            return false;
+        }
+
+        label.Name = model.Name;
+        label.Color = model.Color;
+
+        await this.dbContext.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var label = await this.dbContext.Labels.FindAsync(id);
+
+        if (label == null)
+        {
+            return false;
         }
 
         this.dbContext.Labels.Remove(label);
         await this.dbContext.SaveChangesAsync();
+
+        return true;
     }
 }
