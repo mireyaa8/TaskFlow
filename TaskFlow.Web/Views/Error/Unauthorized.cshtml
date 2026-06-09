@@ -1,7 +1,9 @@
 @{
     ViewData["Title"] = "Unauthorized";
 }
-<div class="alert alert-danger">
-    <h1>Unauthorized</h1>
-    <p>The requested operation could not be completed.</p>
+
+<div class="alert alert-danger mt-4">
+    <h1>401 - Unauthorized</h1>
+    <p>You must be logged in to access this resource.</p>
+    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-dark">Login</a>
 </div>

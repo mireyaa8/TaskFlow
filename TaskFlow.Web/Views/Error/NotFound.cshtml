@@ -1,7 +1,9 @@
 @{
     ViewData["Title"] = "Not Found";
 }
-<div class="alert alert-danger">
-    <h1>Not Found</h1>
-    <p>The requested operation could not be completed.</p>
+
+<div class="alert alert-danger mt-4">
+    <h1>404 - Not Found</h1>
+    <p>The page or resource you requested could not be found.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark">Back to Home</a>
 </div>

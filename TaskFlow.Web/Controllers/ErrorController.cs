@@ -11,8 +11,9 @@ public class ErrorController : Controller
         {
             400 => View("BadRequest"),
             401 => View("Unauthorized"),
+            403 => View("Forbidden"),
             404 => View("NotFound"),
-            _ => View("InternalServerError")
+            _ => View("Error")
         };
     }
 }
