@@ -34,7 +34,11 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskViewModel>> GetMineAsync(string userId)
     {
-        return await this.MapTasks(this.dbContext.TaskItems.Where(t => t.AssigneeId == userId)).ToListAsync();
+        var query = this.dbContext.TaskItems
+            .Where(t => t.Board.Project.OwnerId == userId ||
+                        t.Board.Project.Members.Any(m => m.UserId == userId));
+
+        return await this.MapTasks(query).ToListAsync();
     }
 
     public async Task<TaskViewModel?> GetByIdAsync(int id, string userId, bool isAdmin = false)

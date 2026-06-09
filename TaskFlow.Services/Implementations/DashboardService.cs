@@ -24,19 +24,19 @@ public class DashboardService : IDashboardService
         var accessibleBoards = this.dbContext.Boards
             .Where(b => accessibleProjectIds.Contains(b.ProjectId));
 
-        var myTasks = this.dbContext.TaskItems
-            .Where(t => t.AssigneeId == userId);
+        var accessibleTasks = this.dbContext.TaskItems
+            .Where(t => accessibleProjectIds.Contains(t.Board.ProjectId));
 
         return new DashboardViewModel
         {
             ProjectsCount = await accessibleProjects.CountAsync(),
             BoardsCount = await accessibleBoards.CountAsync(),
-            MyTasksCount = await myTasks.CountAsync(),
-            ToDoTasksCount = await myTasks.CountAsync(t => t.Status == "To Do"),
-            InProgressTasksCount = await myTasks.CountAsync(t => t.Status == "In Progress"),
-            DoneTasksCount = await myTasks.CountAsync(t => t.Status == "Done"),
+            MyTasksCount = await accessibleTasks.CountAsync(),
+            ToDoTasksCount = await accessibleTasks.CountAsync(t => t.Status == "To Do"),
+            InProgressTasksCount = await accessibleTasks.CountAsync(t => t.Status == "In Progress"),
+            DoneTasksCount = await accessibleTasks.CountAsync(t => t.Status == "Done"),
 
-            RecentTasks = await myTasks
+            RecentTasks = await accessibleTasks
                 .OrderByDescending(t => t.CreatedOn)
                 .Take(5)
                 .Select(t => new TaskViewModel
