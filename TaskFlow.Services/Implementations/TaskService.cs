@@ -19,7 +19,23 @@ public class TaskService : ITaskService
         this.dbContext = dbContext;
         this.projectService = projectService;
     }
-
+    public async Task<IEnumerable<BoardSelectViewModel>> GetAvailableBoardsAsync(string userId, bool isAdmin = false)
+    {
+        return await this.dbContext.Boards
+            .Where(b =>
+                isAdmin ||
+                b.Project.OwnerId == userId ||
+                b.Project.Members.Any(m => m.UserId == userId))
+            .OrderBy(b => b.Project.Name)
+            .ThenBy(b => b.Name)
+            .Select(b => new BoardSelectViewModel
+            {
+                Id = b.Id,
+                Name = b.Name,
+                ProjectName = b.Project.Name
+            })
+            .ToListAsync();
+    }
     public async Task<IEnumerable<TaskViewModel>> GetByBoardAsync(int boardId, string userId)
     {
         var board = await this.dbContext.Boards.FirstOrDefaultAsync(b => b.Id == boardId);

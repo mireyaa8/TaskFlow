@@ -38,9 +38,19 @@ public class TasksController : Controller
         return View(task);
     }
 
-    public IActionResult Create(int boardId)
+    public async Task<IActionResult> Create(int? boardId)
     {
-        return View(new TaskInputModel { BoardId = boardId });
+        var availableBoards = await this.taskService.GetAvailableBoardsAsync(
+            User.GetId(),
+            User.IsInRole("Administrator"));
+
+        var model = new TaskInputModel
+        {
+            BoardId = boardId ?? 0,
+            AvailableBoards = availableBoards
+        };
+
+        return View(model);
     }
 
     [HttpPost]
@@ -49,6 +59,10 @@ public class TasksController : Controller
     {
         if (!ModelState.IsValid)
         {
+            model.AvailableBoards = await this.taskService.GetAvailableBoardsAsync(
+                User.GetId(),
+                User.IsInRole("Administrator"));
+
             return View(model);
         }
 

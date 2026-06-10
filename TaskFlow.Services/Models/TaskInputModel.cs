@@ -13,6 +13,7 @@ public class TaskInputModel
     public string Description { get; set; } = null!;
 
     [Required]
+    [Display(Name = "Board")]
     public int BoardId { get; set; }
 
     [Required]
@@ -24,4 +25,6 @@ public class TaskInputModel
     public DateTime? DueDate { get; set; }
 
     public string? AssigneeId { get; set; }
+
+    public IEnumerable<BoardSelectViewModel> AvailableBoards { get; set; } = new HashSet<BoardSelectViewModel>();
 }

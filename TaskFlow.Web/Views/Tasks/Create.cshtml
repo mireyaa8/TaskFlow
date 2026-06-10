@@ -1,10 +1,57 @@
-@model TaskInputModel
+@model TaskFlow.Services.Models.TaskInputModel
+
 @{
     ViewData["Title"] = "Create Task";
 }
+
 <h1>Create Task</h1>
-<form asp-action="Create" method="post">
-    <input type="hidden" asp-for="BoardId" />
-    <partial name="_TaskForm" model="Model" />
-    <button class="btn btn-primary">Create</button>
-</form>
+
+@if (Model.AvailableBoards == null || !Model.AvailableBoards.Any())
+{
+    <div class="alert alert-warning">
+        You need at least one board before you can create a task.
+    </div>
+
+    <a asp-controller="Projects" asp-action="All" class="btn btn-primary">
+        Go to Projects
+    </a>
+}
+else
+{
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label asp-for="BoardId" class="form-label"></label>
+            <select asp-for="BoardId" class="form-select">
+                <option value="">-- Select board --</option>
+
+                @foreach (var board in Model.AvailableBoards)
+                {
+                    if (Model.BoardId == board.Id)
+                    {
+                        <option value="@board.Id" selected>
+                            @board.ProjectName - @board.Name
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@board.Id">
+                            @board.ProjectName - @board.Name
+                        </option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="BoardId" class="text-danger"></span>
+        </div>
+
+        <partial name="_TaskForm" model="Model" />
+
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="MyTasks" class="btn btn-secondary">Cancel</a>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

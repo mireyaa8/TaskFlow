@@ -10,6 +10,8 @@ public interface ITaskService
 
     Task<TaskViewModel?> GetByIdAsync(int id, string userId, bool isAdmin = false);
 
+    Task<IEnumerable<BoardSelectViewModel>> GetAvailableBoardsAsync(string userId, bool isAdmin = false);
+
     Task<int> CreateAsync(TaskInputModel model, string userId);
 
     Task EditAsync(int id, TaskInputModel model, string userId, bool isAdmin = false);
