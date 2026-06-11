@@ -37,15 +37,3 @@ dotnet ef database update --project TaskFlow.Data --startup-project TaskFlow.Web
 
 5. Run the app.
 
-## Suggested First Commits
-
-1. Initial solution and README
-2. Add data models
-3. Add DbContext and EF configurations
-4. Add Identity and role seeding
-5. Add service interfaces
-6. Add service implementations
-7. Add MVC controllers and views
-8. Add AJAX API controller
-9. Add tests
-10. Polish UI and README screenshots
